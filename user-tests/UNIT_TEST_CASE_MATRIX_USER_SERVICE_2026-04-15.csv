@@ -1,0 +1,34 @@
+Test Case ID,File Name / Class Name,Test Objective,Input,Expected Output,Notes
+TC-US-USER-001,UserServiceImplTest / UserServiceImpl,Reject resetPassword when user does not exist,"userId=100,newPassword",Throw AppException USER_NOT_FOUND and no save,CheckDB + Rollback (no DB mutation)
+TC-US-USER-002,UserServiceImplTest / UserServiceImpl,Reject resetPassword for third-party account,"userId=1,accessMethod=GOOGLE",Throw AppException REGISTER_THIRD_PARTY and no save,CheckDB + Rollback (no DB mutation)
+TC-US-USER-003,UserServiceImplTest / UserServiceImpl,Update encoded password for LOCAL account,"userId=2,newPassword",Repository save with encoded password,CheckDB update path
+TC-US-USER-004,UserServiceImplTest / UserServiceImpl,Reject updateEmailVerified when user missing,"userId=88,emailVerified=true",Throw AppException USER_NOT_FOUND and no save,CheckDB + Rollback (no DB mutation)
+TC-US-USER-005,UserServiceImplTest / UserServiceImpl,Persist new email verification flag,"userId=3,emailVerified=false",Repository save with isEmailVerified=false,CheckDB update path
+TC-US-USER-006,UserServiceImplTest / UserServiceImpl,Return empty list when no users by role and org,"roleCode=HR,orgId=55",Return empty list,DB read empty branch
+TC-US-USER-007,UserServiceImplTest / UserServiceImpl,Map users by role and hide password in response,"roleCode=ORG_ADMIN,orgId=9",Return mapped DTO with password=null,DB read + response safety
+TC-US-OM-001,OrgMemberServiceImplTest / OrgMemberServiceImpl,Return null when org-member record not found,"userId=1",Return null and no org API call,DB read not found
+TC-US-OM-002,OrgMemberServiceImplTest / OrgMemberServiceImpl,Return null for inactive org-member,"userId=2,isActive=false",Return null,DB read inactive branch
+TC-US-OM-003,OrgMemberServiceImplTest / OrgMemberServiceImpl,Map active org-member and organization,"userId=3,orgId=100",Return OrgMemberDto with org info,DB read + enrichment
+TC-US-OM-004,OrgMemberServiceImplTest / OrgMemberServiceImpl,Block invite when user already in same org,"orgId=500,userId=11",Throw AppException USER_JOINED_ORG and no invite created,CheckDB + Rollback (no DB mutation)
+TC-US-OM-005,OrgMemberServiceImplTest / OrgMemberServiceImpl,Block invite when target email not verified,"orgId=600,userId=12,emailVerified=false",Throw AppException EMAIL_NOT_VERIFIED and no invite created,CheckDB + Rollback (no DB mutation)
+TC-US-OM-006,OrgMemberServiceImplTest / OrgMemberServiceImpl,Create invite and send email on valid request,"orgId=700,userId=13,roleId=23",Persist PENDING invite with token and send email,CheckDB insert path
+TC-US-JC-001,JobConfigServiceImplTest / JobConfigServiceImpl,Filter active jobs and map DTO fields,"active+inactive+null active configs",Only active job returned and mapped,Branch coverage for Boolean.TRUE filter
+TC-US-JS-001,JobSchedulerTest / JobScheduler,Do not schedule when DB job config is empty,jobConfigs=[],No TaskScheduler interaction,DB read empty branch
+TC-US-JS-002,JobSchedulerTest / JobScheduler,Skip scheduling for unknown job name,"jobName=missing-job",No TaskScheduler interaction,Registry miss branch
+TC-US-JS-003,JobSchedulerTest / JobScheduler,Schedule CRON job,"scheduleType=CRON,expression=0 0/5 * * * *",TaskScheduler schedule called with CronTrigger,Scheduling CRON path
+TC-US-JS-004,JobSchedulerTest / JobScheduler,Schedule FIXED_RATE job in milliseconds,"scheduleType=FIXED_RATE,expression=7",TaskScheduler scheduleAtFixedRate called with 7000,Seconds to milliseconds branch
+TC-US-JS-005,JobSchedulerTest / JobScheduler,Schedule FIXED_DELAY job in milliseconds,"scheduleType=FIXED_DELAY,expression=9",TaskScheduler scheduleWithFixedDelay called with 9000,Seconds to milliseconds branch
+TC-US-FRREG-001,FailedRollbackHandlerRegistryTest / FailedRollbackHandlerRegistry,Resolve handler by rollback type,"types=ORG_CREATION,UPLOAD_FILE",Return matching handler instance,Registry lookup success
+TC-US-FRREG-002,FailedRollbackHandlerRegistryTest / FailedRollbackHandlerRegistry,Return null for unregistered handler type,"registered=ORG_CREATION,request=UPLOAD_FILE",Return null,Registry lookup miss
+TC-US-FRS-001,FailedRollbackServiceImplTest / FailedRollbackServiceImpl,Save FailedRollback DTO to repository entity,"type=UPLOAD_FILE,payload,error,status,retry",Repository save called with mapped entity,CheckDB write path
+TC-US-FRS-002,FailedRollbackServiceImplTest / FailedRollbackServiceImpl,Return empty list when no pending rollback records,pending=[],Return empty list,DB read empty branch
+TC-US-FRS-003,FailedRollbackServiceImplTest / FailedRollbackServiceImpl,Map pending rollback entities to DTO list,"entity id=99,type=ORG_CREATION",Return mapped DTO with expected fields,DB read mapping branch
+TC-US-FRJOB-001,FailedRollbackRetryJobTest / FailedRollbackRetryJob,Validate retry job metadata,"getJobName,getScheduleType,getExpression",Expected constants and empty schedule metadata,Metadata contract
+TC-US-FRJOB-002,FailedRollbackRetryJobTest / FailedRollbackRetryJob,Do nothing when no pending rollback records,pending=[],No handler lookup and no save,DB read empty branch
+TC-US-FRJOB-003,FailedRollbackRetryJobTest / FailedRollbackRetryJob,Skip invalid rollback type,"type=UNKNOWN_TYPE",No handler lookup and no save,Invalid enum branch
+TC-US-FRJOB-004,FailedRollbackRetryJobTest / FailedRollbackRetryJob,Skip when valid type has no handler,"type=ORG_CREATION,handler=null",No save,Missing handler branch
+TC-US-FRJOB-005,FailedRollbackRetryJobTest / FailedRollbackRetryJob,Mark rollback success and persist status,"type=UPLOAD_FILE,rollback success",status=true and save called,CheckDB update path
+TC-US-FRJOB-006,FailedRollbackRetryJobTest / FailedRollbackRetryJob,Increase retryCount when rollback fails,"type=ORG_CREATION,rollback throws exception",retryCount incremented and save called,Rollback compensation path
+TC-US-JWT-001,JwtUtilsTest / JwtUtils,Generate JWT with expected claims,"valid user,roles,permissions,base64 secret",Non-empty JWT with user/roles/permissions claims,Happy path token generation
+TC-US-JWT-002,JwtUtilsTest / JwtUtils,Throw standardized error when secret key invalid,"SECRET_KEY=null",Throw AppException CommonErrorCode.ERROR,Error handling branch
+TC-US-JWT-003,JwtUtilsTest / JwtUtils,Generate non-empty unique helper tokens,"refresh,verify,reset,invite methods",All tokens non-empty and refresh tokens unique,Utility token generation
